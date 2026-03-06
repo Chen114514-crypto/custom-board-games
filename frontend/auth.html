@@ -198,6 +198,9 @@
 <script>
 const API_BASE = 'https://custom-board-games-production.up.railway.app/api';
 
+let usernameTimer, emailTimer, resendTimer;
+let pendingVerifyId = '', pendingVerifyEmail = '';
+
 //  初始化 
 window.addEventListener('DOMContentLoaded', () => {
   // 已登录直接跳转
@@ -410,33 +413,97 @@ async function doRegister() {
   }
 }
 
-//  回车提交 
-document.addEventListener('keydown', e => {
-  if (e.key !== 'Enter') return;
-  const loginVisible = document.getElementById('formLogin').style.display !== 'none';
-  if (loginVisible) doLogin(); else doRegister();
-});
+// 显示验证码表单
+function showVerifyForm(pendingId, email) {
+  document.getElementById('formLogin').style.display = 'none';
+  document.getElementById('formRegister').style.display = 'none';
+  document.getElementById('formVerify').style.display = 'block';
+  document.getElementById('verifyEmailDisplay').textContent = email;
+  pendingVerifyId = pendingId;
+  pendingVerifyEmail = email;
+}
 
-//  重新发送验证邮件
-async function resendVerification() {
-  const email = document.getElementById('loginEmail').value.trim();
-  if (!email) { showAlert('error', '请先在邮箱栏输入你的邮箱地址'); return; }
+// 验证邮箱
+async function doVerify() {
+  const code = document.getElementById('verifyCode').value.trim();
+  if (code.length !== 6) {
+    setFieldMsg('verifyCodeMsg','请输入6位验证码','err');
+    return;
+  }
+  setLoading('btnVerify', true, '验证中...');
+  try {
+    const r = await fetch(`${API_BASE}/verify-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pendingId: pendingVerifyId, code }),
+    });
+    const d = await r.json();
+    if (r.ok) {
+      showAlert('success','✅ 邮箱验证成功！');
+      setTimeout(() => {
+        location.href = `auth.html?verified=1&tab=login`;
+      }, 800);
+    } else {
+      setFieldMsg('verifyCodeMsg', d.message || '验证码错误或已过期','err');
+    }
+  } catch {
+    setFieldMsg('verifyCodeMsg','网络错误','err');
+  }
+  setLoading('btnVerify', false, '✅ 验证');
+}
+
+// 重新发送验证码
+async function doResend() {
+  if (resendTimer) return; // 防止频繁点击
   try {
     const r = await fetch(`${API_BASE}/resend-verification`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email: pendingVerifyEmail }),
     });
     const d = await r.json();
     if (r.ok) {
-      showAlert('success', '✅ 验证邮件已重新发送，请查收邮箱');
+      showAlert('success','✅ 验证码已重新发送');
+      startResendCountdown();
     } else {
-      showAlert('error', d.message || '发送失败，请稍后再试');
+      showAlert('error', d.message || '发送失败');
     }
   } catch {
-    showAlert('error', '网络错误，请稍后再试');
+    showAlert('error','网络错误');
   }
 }
+
+// 重新发送倒计时
+function startResendCountdown() {
+  const link = document.getElementById('resendLink');
+  const countdown = document.getElementById('resendCountdown');
+  link.style.display = 'none';
+  countdown.style.display = 'inline';
+  let count = 60;
+  const timer = setInterval(() => {
+    count--;
+    countdown.textContent = `${count}秒后重新发送`;
+    if (count <= 0) {
+      clearInterval(timer);
+      link.style.display = 'inline';
+      countdown.style.display = 'none';
+      resendTimer = null;
+    }
+  }, 1000);
+  resendTimer = timer;
+}
+
+//  回车提交 
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (document.getElementById('formVerify').style.display !== 'none') {
+    doVerify();
+  } else if (document.getElementById('formLogin').style.display !== 'none') {
+    doLogin();
+  } else {
+    doRegister();
+  }
+});
 </script>
 </body>
 </html>
