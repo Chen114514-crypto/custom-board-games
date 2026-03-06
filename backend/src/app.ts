@@ -115,13 +115,13 @@ const initDatabase = async () => {
 
 // 启动服务
 const PORT = ENV.PORT || 3000;
-const startServer = async () => {
+
+// 启动时初始化数据库并启动服务
+(async () => {
   await initDatabase();
   app.listen(PORT, () => {
     logger.info(`🚀 服务运行在端口 ${PORT}`);
   });
-};
-
-startServer();
+})();
 
 export default app;
