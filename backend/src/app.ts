@@ -15,6 +15,9 @@ import { generalRateLimiter } from './middlewares/rateLimiter';
 
 const app = express();
 
+// 信任代理（Railway 使用反向代理）
+app.set('trust proxy', 1);
+
 // 中间件配置
 app.use(helmet({
   contentSecurityPolicy: {
