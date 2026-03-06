@@ -47,7 +47,14 @@ export const AuthController = {
                 password: req.body.password,
             });
             sendSuccess(res, { pendingId: result.pendingId }, result.message, 201);
-        } catch (err) { next(err); }
+        } catch (err: any) {
+            console.error('[REGISTER_ERROR]', {
+                body: req.body,
+                message: err?.message,
+                stack: err?.stack,
+            });
+            return next(err);
+        }
     },
 
     async login(req: Request, res: Response, next: NextFunction): Promise<void> {

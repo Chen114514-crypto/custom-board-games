@@ -12,6 +12,7 @@ import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import { generalRateLimiter } from './middlewares/rateLimiter';
+import { query } from './config/database';
 
 const app = express();
 
@@ -66,6 +67,20 @@ app.get('/health', (_req, res) => {
     time: new Date().toISOString(),
     env: ENV.NODE_ENV
   });
+});
+
+// 数据库健康检查
+app.get('/health/db', async (_req, res) => {
+  try {
+    const rows = await query<{ users: string | null; pending: string | null }>(
+      `SELECT 
+         to_regclass('public.users') as users,
+         to_regclass('public.pending_verifications') as pending`
+    );
+    res.json({ success: true, data: rows[0] });
+  } catch (e: any) {
+    res.status(500).json({ success: false, message: e.message });
+  }
 });
 
 // 路由
