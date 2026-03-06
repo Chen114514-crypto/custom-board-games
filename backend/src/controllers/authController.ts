@@ -53,7 +53,7 @@ export const AuthController = {
                 message: err?.message,
                 stack: err?.stack,
             });
-            return next(err);
+            next(err);
         }
     },
 

@@ -1,17 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../utils/logger';
 
 export function errorHandler(err: any, req: Request, res: Response, _next: NextFunction) {
-  // 强制输出详细错误（先用 console，确保 Railway 一定能看到）
-  console.error('[ERROR_HANDLER]', {
-    method: req.method,
-    url: req.originalUrl,
-    body: req.body,
-    message: err?.message,
-    stack: err?.stack,
-  });
-
-  logger.error('Unhandled server error', {
+  console.error('[API_ERROR]', {
     method: req.method,
     url: req.originalUrl,
     body: req.body,
@@ -21,7 +11,7 @@ export function errorHandler(err: any, req: Request, res: Response, _next: NextF
 
   res.status(err?.statusCode || 500).json({
     success: false,
-    message: '服务器内部错误，请稍后重试',
+    message: err?.message || '服务器内部错误，请稍后重试', // 临时返回真实错误
     timestamp: new Date().toISOString(),
   });
 }
