@@ -196,86 +196,15 @@
 </div>
 
 <script>
-const API = 'https://custom-board-games-production.up.railway.app/api/auth';
-let usernameTimer, emailTimer;
-let currentUserId = '';
-let currentEmail  = '';
-let currentPendingId = '';
-let resendTimer   = null;
+const API_BASE = 'https://custom-board-games-production.up.railway.app/api';
 
-function showVerifyForm(pendingId, email) {
-  currentPendingId = pendingId;
-  currentEmail     = email;
-  document.getElementById('verifyEmailDisplay').textContent = email;
-  document.getElementById('formLogin').style.display    = 'none';
-  document.getElementById('formRegister').style.display = 'none';
-  document.getElementById('formVerify').style.display   = '';
-  document.getElementById('tabLogin').classList.remove('active');
-  document.getElementById('tabRegister').classList.remove('active');
-  clearAlert();
-}
-
-async function doVerify() {
-  const code = document.getElementById('verifyCode').value.trim();
-  if (code.length !== 6) { showAlert('error', '请输入6位验证码'); return; }
-  setLoading('btnVerify', true, '验证中...');
-  try {
-    const r = await fetch(`${API}/verify-email-code`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pendingId: currentPendingId, code }),
-    });
-    const d = await r.json();
-    if (r.ok) {
-      // 保存 token，直接跳转主页
-      localStorage.setItem('accessToken', d.data.accessToken);
-      localStorage.setItem('user', JSON.stringify(d.data.user));
-      showAlert('success', '✅ 注册成功！正在跳转...');
-      setTimeout(() => { window.location.href = '/index.html'; }, 1000);
-    } else {
-      showAlert('error', d.message || '验证失败');
-    }
-  } catch {
-    showAlert('error', '网络错误，请稍后再试');
-  }
-  setLoading('btnVerify', false, '✅ 验证');
-}
-
-async function doResend() {
-  if (!currentEmail) { showAlert('error', '缺少邮箱信息，请重新注册'); return; }
-  try {
-    const r = await fetch(`${API}/resend-verification`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: currentEmail }),
-    });
-    const d = await r.json();
-    if (r.ok) {
-      currentPendingId = d.data?.pendingId || currentPendingId;
-      showAlert('success', '✅ 验证码已重新发送，请查收邮箱');
-      startResendCountdown();
-    } else {
-      showAlert('error', d.message || '发送失败');
-    }
-  } catch {
-    showAlert('error', '网络错误，请稍后再试');
-  }
-}
-
-function startResendCountdown() {
-  let sec = 60;
-  document.getElementById('resendLink').style.display     = 'none';
-  document.getElementById('resendCountdown').style.display = '';
-  resendTimer = setInterval(() => {
-    document.getElementById('resendCountdown').textContent = `${sec}秒后可重发`;
-    sec--;
-    if (sec < 0) {
-      clearInterval(resendTimer);
-      document.getElementById('resendLink').style.display      = '';
-      document.getElementById('resendCountdown').style.display = 'none';
-    }
-  }, 1000);
-}
+// 所有 fetch 都用这个地址
+fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',  // 重要！允许跨域 cookie
+    body: JSON.stringify({ username, password })
+})
 
 //  初始化 
 window.addEventListener('DOMContentLoaded', () => {
@@ -350,7 +279,7 @@ function checkUsername() {
   setFieldMsg('regUsernameMsg','检查中...','');
   usernameTimer = setTimeout(async () => {
     try {
-      const r = await fetch(`${API}/check-username?username=${encodeURIComponent(val)}`);
+      const r = await fetch(`${API_BASE}/check-username?username=${encodeURIComponent(val)}`);
       const d = await r.json();
       if (d.data?.exists) {
         setFieldMsg('regUsernameMsg','用户名已被使用','err'); setInputState('regUsername','error');
@@ -371,7 +300,7 @@ function checkEmail() {
   setFieldMsg('regEmailMsg','检查中...','');
   emailTimer = setTimeout(async () => {
     try {
-      const r = await fetch(`${API}/check-email?email=${encodeURIComponent(val)}`);
+      const r = await fetch(`${API_BASE}/check-email?email=${encodeURIComponent(val)}`);
       const d = await r.json();
       if (d.data?.exists) {
         setFieldMsg('regEmailMsg','该邮箱已注册','err'); setInputState('regEmail','error');
@@ -429,7 +358,7 @@ async function doLogin() {
   if (!email || !password) { showAlert('error','请填写邮箱和密码'); return; }
   setLoading('btnLogin', true, '登录中...');
   try {
-    const r = await fetch(`${API}/login`, {
+    const r = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -466,7 +395,7 @@ async function doRegister() {
   }
   setLoading('btnRegister', true, '注册中...');
   try {
-    const r = await fetch(`${API}/register`, {
+    const r = await fetch(`${API_BASE}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, email, password, confirmPassword }),
@@ -501,7 +430,7 @@ async function resendVerification() {
   const email = document.getElementById('loginEmail').value.trim();
   if (!email) { showAlert('error', '请先在邮箱栏输入你的邮箱地址'); return; }
   try {
-    const r = await fetch(`${API}/resend-verification`, {
+    const r = await fetch(`${API_BASE}/resend-verification`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
