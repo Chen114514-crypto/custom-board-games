@@ -343,7 +343,7 @@ function checkPassword() {
 
 function checkConfirm() {
   const pwd = document.getElementById('regPassword').value;
-  const cfm = document.getElementById('regConfirm').value;
+  const cfm = document.getElementById('regConfirmPassword').value;
   if (!cfm) { setFieldMsg('regConfirmMsg','',''); setInputState('regConfirm',''); return; }
   if (pwd === cfm) {
     setFieldMsg('regConfirmMsg',' 密码一致','ok'); setInputState('regConfirm','ok');
@@ -383,40 +383,35 @@ async function doLogin() {
 
 //  注册 
 async function doRegister() {
-  const username        = document.getElementById('regUsername').value.trim();
-  const email           = document.getElementById('regEmail').value.trim();
-  const password        = document.getElementById('regPassword').value;
-  const confirmPassword = document.getElementById('regConfirm').value;
+  const username = document.getElementById('regUsername').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const confirmPassword = document.getElementById('regConfirmPassword').value;
+  
   if (!username || !email || !password || !confirmPassword) {
-    showAlert('error','请填写所有字段'); return;
+    showAlert('error', '请填写所有字段');
+    return;
   }
-  if (password !== confirmPassword) { showAlert('error','两次密码不一致'); return; }
-  if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password) || password.length < 8) {
-    showAlert('error','密码需至少8位，包含大小写字母和数字'); return;
-  }
+  
   setLoading('btnRegister', true, '注册中...');
   try {
     const r = await fetch(`${API_BASE}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ username, email, password, confirmPassword }),
     });
     const d = await r.json();
     if (r.ok) {
+      showAlert('success', '✅ 注册成功！请验证邮箱');
       showVerifyForm(d.data.pendingId, email);
-      showAlert('success', '✅ 注册成功！验证码已发送至您的邮箱');
-      startResendCountdown();
     } else {
-      const msg = Array.isArray(d.errors)
-        ? d.errors.map(e => e.msg).join('；')
-        : (d.message || '注册失败');
-      showAlert('error', msg);
+      showAlert('error', d.message || '注册失败');
     }
-    setLoading('btnRegister', false, '注册');
-  } catch {
-    showAlert('error','网络错误，请检查后端服务是否运行');
-    setLoading('btnRegister', false, '注册');
+  } catch (err) {
+    showAlert('error', '网络错误');
   }
+  setLoading('btnRegister', false, '注册');
 }
 
 // 显示验证码表单
