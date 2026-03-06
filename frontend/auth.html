@@ -359,7 +359,7 @@ async function doLogin() {
   if (!email || !password) { showAlert('error','请填写邮箱和密码'); return; }
   setLoading('btnLogin', true, '登录中...');
   try {
-    const r = await fetch(`${API_BASE}/auth/login`, {
+    const r = await fetch(`${API_BASE}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
