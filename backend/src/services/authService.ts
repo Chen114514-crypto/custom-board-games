@@ -59,7 +59,6 @@ export const AuthService = {
         );
         const pendingId = rows[0].id;
 
-        await EmailService.sendVerificationCode(dto.email, code);
         try {
             await EmailService.sendVerificationEmail(dto.email, dto.username, code);
         } catch (e: any) {
@@ -138,7 +137,6 @@ export const AuthService = {
         const pending = rows[0];
         if (!pending) throw new AppError('NOT_FOUND', '未找到注册申请，请重新注册');
 
-        // 用 created_at 做简单频率限制
         if (pending.created_at && (Date.now() - new Date(pending.created_at).getTime()) < 60_000) {
             throw new AppError('TOO_FREQUENT', '发送过于频繁，请60秒后再试');
         }
@@ -150,13 +148,14 @@ export const AuthService = {
                WHERE id = $1`,
             [pending.id, hash, expires]
         );
-        await EmailService.sendVerificationCode(email, code);
+
         try {
             await EmailService.sendVerificationEmail(email, pending.username, code);
         } catch (e: any) {
             console.error('[MAIL_SEND_ERROR]', e?.message, e?.stack);
             throw new Error('验证码邮件发送失败，请检查 SMTP 配置');
         }
+
         logger.info('重新发送验证码', { pendingId: pending.id });
         return { pendingId: pending.id };
     },
