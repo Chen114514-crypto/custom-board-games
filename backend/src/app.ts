@@ -30,14 +30,23 @@ app.use(helmet({
 }));
 
 app.use(cors({
-  origin: [
-    'https://chen114514-crypto.github.io',
-    'http://localhost:5173',
-    'http://192.168.40.15:5173'
-  ],
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      'https://chen114514-crypto.github.io',
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://192.168.40.15:5173'
+    ];
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
 }));
 
 app.use(compression());
