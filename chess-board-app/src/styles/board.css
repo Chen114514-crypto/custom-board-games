@@ -1,0 +1,39 @@
+.board {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    width: 100%;
+    height: 100%;
+    border: 2px solid #333;
+}
+
+.square {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+}
+
+.square:nth-child(odd) {
+    background-color: #eee;
+}
+
+.square:nth-child(even) {
+    background-color: #ddd;
+}
+
+.piece {
+    width: 80%;
+    height: 80%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.piece:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s;
+}

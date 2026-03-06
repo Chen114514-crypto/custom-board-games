@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>个人中心 - 棋局设计器</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:      #0d1117;
+    --surface: #161b22;
+    --surface2:#21262d;
+    --border:  #30363d;
+    --primary: #e94560;
+    --text:    #e6edf3;
+    --muted:   #8b949e;
+    --success: #3fb950;
+  }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    min-height: 100vh;
+  }
+  .topbar {
+    height: 52px; background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 24px; gap: 12px;
+  }
+  .topbar-brand { font-weight: 700; color: var(--primary); font-size: 16px; cursor: pointer; }
+  .topbar-title { font-size: 14px; color: var(--muted); }
+  .topbar-back {
+    margin-left: auto; padding: 6px 14px; border: 1px solid var(--border);
+    border-radius: 6px; background: none; color: var(--text);
+    font-size: 13px; cursor: pointer;
+  }
+  .topbar-back:hover { background: var(--surface2); }
+  .page { max-width: 720px; margin: 40px auto; padding: 0 24px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 28px; margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 15px; font-weight: 600; margin-bottom: 20px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .avatar-section {
+    display: flex; align-items: center; gap: 20px; margin-bottom: 24px;
+  }
+  .avatar-big {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: var(--primary); display: flex; align-items: center;
+    justify-content: center; font-size: 28px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+  .avatar-info { flex: 1; }
+  .avatar-name { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .avatar-email { font-size: 13px; color: var(--muted); }
+  .avatar-role {
+    display: inline-block; margin-top: 6px;
+    padding: 2px 10px; border-radius: 20px;
+    background: rgba(233,69,96,.15); color: var(--primary);
+    font-size: 12px; border: 1px solid rgba(233,69,96,.3);
+  }
+  .form-row { margin-bottom: 16px; }
+  .form-row label {
+    display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px;
+  }
+  .form-input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px;
+  }
+  .form-input:focus { outline: none; border-color: var(--primary); }
+  .form-input:disabled { opacity: .5; cursor: not-allowed; }
+  .form-hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+  .btn {
+    padding: 9px 20px; border-radius: 8px; font-size: 13px;
+    font-weight: 600; cursor: pointer; border: none;
+  }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-primary:hover { opacity: .9; }
+  .btn-ghost { background: none; border: 1px solid var(--border); color: var(--text); }
+  .btn-ghost:hover { background: var(--surface2); }
+  .btn-danger { background: none; border: 1px solid #e94560; color: #e94560; }
+  .btn-danger:hover { background: rgba(233,69,96,.1); }
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .stat-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; text-align: center;
+  }
+  .stat-num { font-size: 24px; font-weight: 700; color: var(--primary); }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .alert {
+    padding: 10px 14px; border-radius: 8px; font-size: 13px;
+    margin-bottom: 16px; display: none;
+  }
+  .alert.show { display: block; }
+  .alert-success { background: rgba(63,185,80,.15); border: 1px solid rgba(63,185,80,.3); color: var(--success); }
+  .alert-error   { background: rgba(233,69,96,.15); border: 1px solid rgba(233,69,96,.3); color: var(--primary); }
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-brand" onclick="location.href='index.html'">♟ 棋局设计器</span>
+  <span class="topbar-title">/ 个人中心</span>
+  <button class="topbar-back" onclick="location.href='index.html'">← 返回设计器</button>
+</div>
+
+<div class="page">
+
+  <!-- 用户信息卡片 -->
+  <div class="card">
+    <div class="avatar-section">
+      <div class="avatar-big" id="avatarBig">?</div>
+      <div class="avatar-info">
+        <div class="avatar-name" id="profileName">加载中...</div>
+        <div class="avatar-email" id="profileEmail"></div>
+        <span class="avatar-role" id="profileRole">用户</span>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-item">
+        <div class="stat-num" id="statBoards">0</div>
+        <div class="stat-label">我的棋盘</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num" id="statDays">0</div>
+        <div class="stat-label">注册天数</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num" id="statLogin">-</div>
+        <div class="stat-label">上次登录</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 修改资料 -->
+  <div class="card">
+    <div class="card-title">✏️ 修改资料</div>
+    <div class="alert alert-success" id="profileAlert"></div>
+    <div class="form-row">
+      <label>用户名</label>
+      <input class="form-input" id="editUsername" type="text" maxlength="32">
+      <div class="form-hint">2-32个字符，字母/数字/中文</div>
+    </div>
+    <div class="form-row">
+      <label>显示名称</label>
+      <input class="form-input" id="editDisplayName" type="text" maxlength="64" placeholder="留空则使用用户名">
+    </div>
+    <div class="form-row">
+      <label>邮箱</label>
+      <input class="form-input" id="editEmail" type="email" disabled>
+      <div class="form-hint">邮箱暂不支持修改</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveProfile()">💾 保存修改</button>
+      <button class="btn btn-ghost"   onclick="loadProfile()">↺ 重置</button>
+    </div>
+  </div>
+
+  <!-- 修改密码 -->
+  <div class="card">
+    <div class="card-title">🔒 修改密码</div>
+    <div class="alert alert-success" id="pwAlert"></div>
+    <div class="form-row">
+      <label>当前密码</label>
+      <input class="form-input" id="pwCurrent" type="password" placeholder="输入当前密码">
+    </div>
+    <div class="form-row">
+      <label>新密码</label>
+      <input class="form-input" id="pwNew" type="password" placeholder="大小写字母+数字，至少8位">
+    </div>
+    <div class="form-row">
+      <label>确认新密码</label>
+      <input class="form-input" id="pwConfirm" type="password" placeholder="再次输入新密码">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="changePassword()">🔑 修改密码</button>
+    </div>
+  </div>
+
+  <!-- 账号安全 -->
+  <div class="card">
+    <div class="card-title">🛡️ 账号安全</div>
+    <div class="form-row">
+      <label>账号状态</label>
+      <div style="font-size:14px;color:var(--success)">✅ 正常</div>
+    </div>
+    <div class="form-row">
+      <label>邮箱验证</label>
+      <div style="font-size:14px;" id="emailVerifiedStatus">检查中...</div>
+    </div>
+    <div class="divider"></div>
+    <div class="btn-row">
+      <button class="btn btn-danger" onclick="confirmLogoutAll()">🚪 退出所有设备</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = 'http://localhost:3000/api/auth';
+let isRedirecting = false;
+
+function getToken() { return localStorage.getItem('accessToken'); }
+
+async function fetchWithAuth(url, options) {
+  options = options || {};
+  const token = getToken();
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  let res = await fetch(url, Object.assign({}, options, { headers: headers, credentials: 'include' }));
+  if (res.status === 401) {
+    const refreshed = await tryRefreshToken();
+    if (refreshed) {
+      headers['Authorization'] = 'Bearer ' + getToken();
+      res = await fetch(url, Object.assign({}, options, { headers: headers, credentials: 'include' }));
+    } else { doLogout(); return null; }
+  }
+  return res;
+}
+
+async function tryRefreshToken() {
+  try {
+    const res = await fetch(API + '/refresh', { method: 'POST', credentials: 'include' });
+    if (res.ok) {
+      const d = await res.json();
+      localStorage.setItem('accessToken', d.data.accessToken);
+      return true;
+    }
+  } catch {}
+  return false;
+}
+
+function doLogout() {
+  if (isRedirecting) return;
+  isRedirecting = true;
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('user');
+  location.href = 'auth.html';
+}
+
+async function logout() {
+  try { await fetch(API + '/logout', { method: 'POST', credentials: 'include' }); } catch {}
+  doLogout();
+}
+
+// ── 加载用户信息 ──────────────────────────────────────
+async function loadProfile() {
+  const res = await fetchWithAuth(API + '/me');
+  if (!res || !res.ok) { doLogout(); return; }
+  const d = await res.json();
+  
+  // 兼容 data.user 和 data 两种结构
+  const u = d.data?.user || d.data || d;
+  if (!u || !u.username) { doLogout(); return; }
+
+  localStorage.setItem('user', JSON.stringify(u));
+
+  document.getElementById('avatarBig').textContent    = u.username[0].toUpperCase();
+  document.getElementById('profileName').textContent  = u.display_name || u.username;
+  document.getElementById('profileEmail').textContent = u.email;
+  document.getElementById('profileRole').textContent  = u.role === 'admin' ? '👑 管理员' : '👤 用户';
+
+  const days = Math.floor((Date.now() - new Date(u.created_at).getTime()) / 86400000);
+  document.getElementById('statDays').textContent   = days;
+  document.getElementById('statBoards').textContent = '0';
+  document.getElementById('statLogin').textContent  = u.last_login_at
+    ? new Date(u.last_login_at).toLocaleDateString('zh-CN')
+    : '首次';
+
+  document.getElementById('editUsername').value    = u.username;
+  document.getElementById('editDisplayName').value = u.display_name || '';
+  document.getElementById('editEmail').value       = u.email;
+
+  document.getElementById('emailVerifiedStatus').innerHTML = u.email_verified
+    ? '<span style="color:var(--success)">✅ 已验证</span>'
+    : '<span style="color:#d29922">⚠️ 未验证</span>';
+}
+
+// ── 保存资料 ──────────────────────────────────────────
+async function saveProfile() {
+  const username    = document.getElementById('editUsername').value.trim();
+  const displayName = document.getElementById('editDisplayName').value.trim();
+
+  if (!username) { showAlert('profileAlert', '用户名不能为空', 'error'); return; }
+
+  const res = await fetchWithAuth(API + '/profile', {
+    method: 'PATCH',
+    body: JSON.stringify({ username: username, display_name: displayName }),
+  });
+
+  if (!res) return;
+  const d = await res.json();
+
+  if (res.ok) {
+    localStorage.setItem('user', JSON.stringify(d.data.user));
+    showAlert('profileAlert', '✅ 资料已更新', 'success');
+    loadProfile();
+  } else {
+    showAlert('profileAlert', d.message || '修改失败', 'error');
+  }
+}
+
+// ── 修改密码 ──────────────────────────────────────────
+async function changePassword() {
+  const current = document.getElementById('pwCurrent').value;
+  const newPw   = document.getElementById('pwNew').value;
+  const confirm = document.getElementById('pwConfirm').value;
+
+  if (!current || !newPw || !confirm) { showAlert('pwAlert', '请填写所有密码字段', 'error'); return; }
+  if (newPw !== confirm)              { showAlert('pwAlert', '两次新密码不一致', 'error'); return; }
+  if (newPw.length < 8)               { showAlert('pwAlert', '新密码至少8位', 'error'); return; }
+
+  const res = await fetchWithAuth(API + '/change-password', {
+    method: 'POST',
+    body: JSON.stringify({ currentPassword: current, newPassword: newPw }),
+  });
+
+  if (!res) return;
+  const d = await res.json();
+
+  if (res.ok) {
+    showAlert('pwAlert', '✅ 密码已修改成功', 'success');
+    document.getElementById('pwCurrent').value = '';
+    document.getElementById('pwNew').value     = '';
+    document.getElementById('pwConfirm').value = '';
+    // 不自动退出，让用户继续使用
+  } else {
+    showAlert('pwAlert', d.message || '修改失败', 'error');
+  }
+}
+
+// ── 退出所有设备 ──────────────────────────────────────
+async function confirmLogoutAll() {
+  if (!confirm('确定要退出所有设备吗？')) return;
+  await logout();
+}
+
+// ── 工具函数 ──────────────────────────────────────────
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'alert show alert-' + type;
+  setTimeout(function() { el.classList.remove('show'); }, 3000);
+}
+
+// ── 初始化 ────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  const token = getToken();
+  if (!token) { location.href = 'auth.html'; return; }
+  loadProfile();
+});
+</script>
+</body>
+</html>

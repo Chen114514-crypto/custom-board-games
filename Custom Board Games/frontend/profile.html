@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户个人中心</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>用户个人中心</h1>
+        <div class="profile-info">
+            <div class="avatar">
+                <img id="avatarImage" src="uploads/avatars/default.png" alt="用户头像">
+                <input type="file" id="avatarInput" accept="image/*" onchange="uploadAvatar()">
+            </div>
+            <div class="username">
+                <label for="usernameInput">用户名:</label>
+                <input type="text" id="usernameInput" placeholder="输入新用户名">
+                <button onclick="updateUsername()">更新用户名</button>
+            </div>
+        </div>
+        <div class="board-list">
+            <h2>我的棋盘列表</h2>
+            <ul id="boardList"></ul>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api/profile';
+
+        async function fetchUserProfile() {
+            const response = await fetch(API_URL);
+            const data = await response.json();
+            document.getElementById('usernameInput').value = data.username;
+            document.getElementById('avatarImage').src = data.avatarUrl || 'uploads/avatars/default.png';
+            renderBoardList(data.boards);
+        }
+
+        function renderBoardList(boards) {
+            const boardList = document.getElementById('boardList');
+            boardList.innerHTML = '';
+            boards.forEach(board => {
+                const listItem = document.createElement('li');
+                listItem.textContent = board.name;
+                boardList.appendChild(listItem);
+            });
+        }
+
+        async function updateUsername() {
+            const newUsername = document.getElementById('usernameInput').value;
+            await fetch(`${API_URL}/username`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: newUsername })
+            });
+            alert('用户名已更新');
+        }
+
+        async function uploadAvatar() {
+            const fileInput = document.getElementById('avatarInput');
+            const formData = new FormData();
+            formData.append('avatar', fileInput.files[0]);
+
+            await fetch(`${API_URL}/avatar`, {
+                method: 'PUT',
+                body: formData
+            });
+            alert('头像已更新');
+            fetchUserProfile(); // Refresh profile data
+        }
+
+        window.onload = fetchUserProfile;
+    </script>
+</body>
+</html>

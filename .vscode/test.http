@@ -1,0 +1,49 @@
+### 健康检查
+GET http://localhost:3000/health
+
+###
+
+### 注册用户1（测试用，不发邮件）
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "测试用户",
+    "email": "test@example.com",
+    "password": "Test1234",
+    "confirmPassword": "Test1234"
+}
+
+###
+
+### 注册用户2（真实邮箱，测试邮件发送）
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "ChenSitian",
+    "email": "180375278@qq.com",
+    "password": "Csitian2026",
+    "confirmPassword": "Csitian2026"
+}
+
+###
+
+### 登录
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "test@example.com",
+    "password": "Test1234"
+}
+
+###
+
+### 检查邮箱
+GET http://localhost:3000/api/auth/check-email?email=test@example.com
+
+###
+
+### 检查用户名
+GET http://localhost:3000/api/auth/check-username?username=测试用户

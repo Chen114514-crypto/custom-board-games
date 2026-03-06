@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户个人中心</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>用户个人中心</h1>
+            <nav>
+                <a href="index.html">首页</a>
+                <a href="auth.html">登录/注册</a>
+                <a href="profile.html">个人资料</a>
+            </nav>
+        </header>
+        <main>
+            <section id="user-info">
+                <h2>个人信息</h2>
+                <div>
+                    <img id="avatar" src="uploads/avatars/default.png" alt="用户头像">
+                    <input type="file" id="avatarUpload" accept="image/*">
+                </div>
+                <div>
+                    <label for="username">用户名:</label>
+                    <input type="text" id="username" placeholder="输入新用户名">
+                    <button id="updateUsername">更新用户名</button>
+                </div>
+            </section>
+            <section id="board-list">
+                <h2>我的棋盘列表</h2>
+                <ul id="boards">
+                    <!-- 棋盘列表将通过 JavaScript 动态生成 -->
+                </ul>
+            </section>
+        </main>
+        <footer>
+            <p>&copy; 2023 自定义棋局设计器</p>
+        </footer>
+    </div>
+    <script src="profile.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "chess-board-app",
+  "version": "1.0.0",
+  "description": "A customizable chess board application that can be run locally and deployed to the cloud.",
+  "main": "src/app.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "typescript": "^4.5.4",
+    "vite": "^2.6.4"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.7",
+    "@vitejs/plugin-vue": "^1.9.0"
+  },
+  "keywords": [
+    "chess",
+    "board",
+    "game",
+    "typescript",
+    "vite"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
