@@ -46,20 +46,26 @@ export const AuthService = {
         const { code, hash, expires } = TokenService.generateVerifyCode();
 
         await query(
-            'DELETE FROM pending_registrations WHERE email = $1 OR username = $2',
+            'DELETE FROM pending_verifications WHERE email = $1 OR username = $2',
             [dto.email.toLowerCase().trim(), dto.username]
         );
 
         const rows = await query<{ id: string }>(
-            `INSERT INTO pending_registrations
-               (username, email, password_hash, code_hash, expires_at)
-             VALUES ($1, $2, $3, $4, $5)
+            `INSERT INTO pending_verifications
+               (username, email, password_hash, code, expires_at, created_at)
+             VALUES ($1, $2, $3, $4, $5, NOW())
              RETURNING id`,
             [dto.username, dto.email.toLowerCase().trim(), passwordHash, hash, expires]
         );
         const pendingId = rows[0].id;
 
-        await EmailService.sendVerificationEmail(dto.email, dto.username, code);
+        await EmailService.sendVerificationCode(dto.email, code);
+        try {
+            await EmailService.sendVerificationEmail(dto.email, dto.username, code);
+        } catch (e: any) {
+            console.error('[MAIL_SEND_ERROR]', e?.message, e?.stack);
+            throw new Error('验证码邮件发送失败，请检查 SMTP 配置');
+        }
 
         logger.info('待注册记录已创建', { pendingId, username: dto.username });
         return { message: '验证码已发送至您的邮箱，请在10分钟内完成验证。', pendingId };
@@ -71,27 +77,25 @@ export const AuthService = {
 
         const rows = await query<{
             id: string; username: string; email: string;
-            password_hash: string; code_hash: string;
-            expires_at: Date; attempts: number;
-        }>('SELECT * FROM pending_registrations WHERE id = $1 LIMIT 1', [pendingId]);
+            password_hash: string; code: string; expires_at: Date;
+        }>(
+            `SELECT id, username, email, password_hash, code, expires_at
+               FROM pending_verifications
+               WHERE id = $1
+               LIMIT 1`,
+            [pendingId]
+        );
 
         const pending = rows[0];
         if (!pending) throw new AppError('INVALID_CODE', '注册申请不存在或已过期');
 
-        if (new Date(pending.expires_at) < new Date())
+        if (new Date(pending.expires_at) < new Date()) {
             throw new AppError('CODE_EXPIRED', '验证码已过期，请重新注册');
-
-        if (pending.attempts >= 5)
-            throw new AppError('TOO_MANY_ATTEMPTS', '错误次数过多，请重新注册');
+        }
 
         const inputHash = require('crypto').createHash('sha256').update(code).digest('hex');
-        if (inputHash !== pending.code_hash) {
-            await query(
-                'UPDATE pending_registrations SET attempts = attempts + 1 WHERE id = $1',
-                [pendingId]
-            );
-            const left = 4 - pending.attempts;
-            throw new AppError('INVALID_CODE', `验证码错误，还可尝试 ${left} 次`);
+        if (inputHash !== pending.code) {
+            throw new AppError('INVALID_CODE', '验证码错误');
         }
 
         // 正式创建账号
@@ -101,7 +105,7 @@ export const AuthService = {
             passwordHash: pending.password_hash,
         });
 
-        await query('DELETE FROM pending_registrations WHERE id = $1', [pendingId]);
+        await query('DELETE FROM pending_verifications WHERE id = $1', [pendingId]);
 
         // 直接生成登录 token
         const accessToken  = TokenService.generateAccessToken({
@@ -123,25 +127,36 @@ export const AuthService = {
 
     // ==================== 重新发送验证码 ====================
     async resendVerification(email: string): Promise<{ pendingId: string }> {
-        const rows = await query<{ id: string; username: string; sent_at: Date }>(
-            'SELECT id, username, sent_at FROM pending_registrations WHERE email = $1 ORDER BY created_at DESC LIMIT 1',
+        const rows = await query<{ id: string; username: string; created_at: Date }>(
+            `SELECT id, username, created_at
+               FROM pending_verifications
+               WHERE email = $1
+               ORDER BY created_at DESC
+               LIMIT 1`,
             [email.toLowerCase().trim()]
         );
         const pending = rows[0];
         if (!pending) throw new AppError('NOT_FOUND', '未找到注册申请，请重新注册');
 
-        // 60秒内只能发一次
-        if (pending.sent_at && (Date.now() - new Date(pending.sent_at).getTime()) < 60_000)
+        // 用 created_at 做简单频率限制
+        if (pending.created_at && (Date.now() - new Date(pending.created_at).getTime()) < 60_000) {
             throw new AppError('TOO_FREQUENT', '发送过于频繁，请60秒后再试');
+        }
 
         const { code, hash, expires } = TokenService.generateVerifyCode();
         await query(
-            `UPDATE pending_registrations
-             SET code_hash = $2, expires_at = $3, attempts = 0, sent_at = NOW()
-             WHERE id = $1`,
+            `UPDATE pending_verifications
+               SET code = $2, expires_at = $3
+               WHERE id = $1`,
             [pending.id, hash, expires]
         );
-        await EmailService.sendVerificationEmail(email, pending.username, code);
+        await EmailService.sendVerificationCode(email, code);
+        try {
+            await EmailService.sendVerificationEmail(email, pending.username, code);
+        } catch (e: any) {
+            console.error('[MAIL_SEND_ERROR]', e?.message, e?.stack);
+            throw new Error('验证码邮件发送失败，请检查 SMTP 配置');
+        }
         logger.info('重新发送验证码', { pendingId: pending.id });
         return { pendingId: pending.id };
     },
