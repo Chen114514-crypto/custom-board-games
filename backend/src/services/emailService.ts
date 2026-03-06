@@ -1,9 +1,12 @@
 import nodemailer from 'nodemailer';
-import dns from 'dns';
 import { ENV } from '../config/env';
 import { logger } from '../utils/logger';
+import dns from 'dns';
 
-dns.setDefaultResultOrder('ipv6first'); // 强制优先 IPv6
+// Node.js v18 只支持 'ipv4first' 或 'verbatim'
+if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+}
 
 const transporter = nodemailer.createTransport({
     host:   'smtp.qq.com',
