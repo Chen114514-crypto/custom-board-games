@@ -329,6 +329,22 @@
 <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
 
 <script>
+// Global state
+const S = {
+  tool: 'select', piece: '♙', pieceName: '兵', color: '#fff',
+  rows: 8, cols: 8, cellSize: 60, boardStyle: 'chess',
+  cells: {}, selected: null, zoomVal: 1, boardName: '未命名棋盘',
+  dragging: null
+};
+
+const PIECES = [
+  {i:'♔',n:'国王'}, {i:'♕',n:'皇后'}, {i:'♖',n:'城堡'},
+  {i:'♗',n:'主教'}, {i:'♘',n:'骑士'}, {i:'♙',n:'兵'},
+  {i:'♚',n:'黑王'}, {i:'♛',n:'黑后'}, {i:'♜',n:'黑城'}
+];
+
+const COLORS = ['#ffffff','#000000','#e94560','#3fb950','#d29922','#58a6ff','#ff7b72'];
+
 const API_BASE = 'https://custom-board-games-production.up.railway.app/api/auth';
 
 // Check login status and update UI
