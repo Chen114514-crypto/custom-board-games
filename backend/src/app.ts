@@ -69,12 +69,44 @@ app.use(errorHandler);
 
 // 启动时初始化数据库
 const initDatabase = async () => {
-  try {
-    const sql = fs.readFileSync(
-      path.join(__dirname, '../migrations/001_init.sql'),
-      'utf-8'
+  const createTablesSql = `
+    CREATE TABLE IF NOT EXISTS users (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      username VARCHAR(50) UNIQUE NOT NULL,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      is_verified BOOLEAN DEFAULT FALSE,
+      email_verified_at TIMESTAMP,
+      failed_login_attempts INT DEFAULT 0,
+      locked_until TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    await pool.query(sql);
+    
+    CREATE TABLE IF NOT EXISTS pending_verifications (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      email VARCHAR(255) UNIQUE NOT NULL,
+      username VARCHAR(50) NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      code VARCHAR(6) NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token VARCHAR(500) NOT NULL UNIQUE,
+      expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+  `;
+  
+  try {
+    await pool.query(createTablesSql);
     logger.info('✅ 数据库初始化成功');
   } catch (err: any) {
     logger.warn('⚠️ 数据库初始化:', err.message.slice(0, 100));
