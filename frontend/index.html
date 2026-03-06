@@ -329,10 +329,28 @@
 <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
 
 <script>
-// 检查登录状态
-const token = localStorage.getItem('accessToken');
-if (!token) {
-  location.href = 'auth.html';
+const API_BASE = 'https://custom-board-games-production.up.railway.app/api/auth';
+
+// Check login status and update UI
+function checkLogin() {
+  const token = localStorage.getItem('accessToken');
+  const user = localStorage.getItem('user');
+  
+  if (token && user) {
+    try {
+      const userData = JSON.parse(user);
+      document.getElementById('userName').textContent = userData.username || 'User';
+      document.getElementById('userAvatar').textContent = userData.username.charAt(0).toUpperCase();
+      document.getElementById('menuLogin').style.display = 'none';
+      document.getElementById('menuProfile').style.display = 'block';
+      document.getElementById('menuSep').style.display = 'block';
+      document.getElementById('menuLogout').style.display = 'block';
+    } catch (err) {
+      logout();
+    }
+  } else {
+    location.href = 'auth.html';
+  }
 }
 
 // 退出登录
@@ -349,12 +367,12 @@ async function fetchWithAuth(url, options = {}) {
   const token = getToken();
   const headers = { 'Content-Type': 'application/json', ...options.headers };
   if (token) headers['Authorization'] = 'Bearer ' + token;
-  let res = await fetch(url, { ...options, headers, credentials: 'include' });
+  let res = await fetch(API_BASE + url, { ...options, headers, credentials: 'include' });
   if (res.status === 401) {
     const refreshed = await tryRefreshToken();
     if (refreshed) {
       headers['Authorization'] = 'Bearer ' + getToken();
-      res = await fetch(url, { ...options, headers, credentials: 'include' });
+      res = await fetch(API_BASE + url, { ...options, headers, credentials: 'include' });
     } else {
       return null;
     }
@@ -364,7 +382,7 @@ async function fetchWithAuth(url, options = {}) {
 
 async function tryRefreshToken() {
   try {
-    const res = await fetch(API + '/refresh', { method:'POST', credentials:'include' });
+    const res = await fetch(API_BASE + '/refresh', { method:'POST', credentials:'include' });
     if (res.ok) {
       const d = await res.json();
       localStorage.setItem('accessToken', d.data.accessToken);
