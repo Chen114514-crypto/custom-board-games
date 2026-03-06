@@ -329,19 +329,18 @@
 <input type="file" id="importFile" accept=".json" style="display:none" onchange="handleImport(event)">
 
 <script>
-const API = 'https://custom-board-games-production.up.railway.app/api/auth';
-const S = {
-  tool:'select', piece:'♙', pieceName:'兵', color:'#ffffff',
-  rows:8, cols:8, cellSize:60, boardStyle:'chess',
-  cells:{}, selected:null, zoomVal:1, boardName:'未命名棋盘', dragging:null,
-};
+// 检查登录状态
+const token = localStorage.getItem('accessToken');
+if (!token) {
+  location.href = 'auth.html';
+}
 
-const PIECES = [
-  {i:'♙',n:'兵'},{i:'♖',n:'车'},{i:'♘',n:'马'},{i:'♗',n:'象'},{i:'♕',n:'后'},{i:'♔',n:'王'},
-  {i:'♟',n:'黑兵'},{i:'♜',n:'黑车'},{i:'♞',n:'黑马'},{i:'♝',n:'黑象'},{i:'♛',n:'黑后'},{i:'♚',n:'黑王'},
-  {i:'●',n:'棋子'},{i:'○',n:'空子'},{i:'將',n:'将'},
-];
-const COLORS = ['#ffffff','#1a1a1a','#e94560','#3fb950','#d29922','#58a6ff','#a371f7','#f78166'];
+// 退出登录
+function logout() {
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('user');
+  location.href = 'auth.html';
+}
 
 // ── Token 管理 ────────────────────────────────────────
 function getToken() { return localStorage.getItem('accessToken'); }
@@ -373,50 +372,6 @@ async function tryRefreshToken() {
     }
   } catch {}
   return false;
-}
-
-// ── 登录状态检查 ──────────────────────────────────────
-let isRedirecting = false;
-
-async function checkLogin() {
-  if (isRedirecting) return;
-  const token = getToken();
-  const user  = JSON.parse(localStorage.getItem('user') || 'null');
-  if (!token || !user) {
-    isRedirecting = true;
-    location.href = 'auth.html';
-    return;
-  }
-  try {
-    const res = await fetchWithAuth(API + '/me');
-    if (!res || !res.ok) {
-      isRedirecting = true;
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('user');
-      location.href = 'auth.html';
-      return;
-    }
-    const d = await res.json();
-    const u = d.data.user;
-    localStorage.setItem('user', JSON.stringify(u));
-    document.getElementById('userName').textContent   = u.username;
-    document.getElementById('userAvatar').textContent = u.username[0].toUpperCase();
-    document.getElementById('menuLogin').style.display   = 'none';
-    document.getElementById('menuProfile').style.display = 'block';
-    document.getElementById('menuSep').style.display     = 'block';
-    document.getElementById('menuLogout').style.display  = 'block';
-  } catch (e) {
-    console.error('checkLogin error:', e);
-  }
-}
-
-async function logout() {
-  if (isRedirecting) return;
-  isRedirecting = true;
-  try { await fetch(API + '/logout', { method:'POST', credentials:'include' }); } catch {}
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('user');
-  location.href = 'auth.html';
 }
 
 // ── 初始化 ────────────────────────────────────────────
