@@ -198,6 +198,12 @@
 <script>
 const API_BASE = 'https://custom-board-games-production.up.railway.app/api';
 
+// 测试后端连接（改成 /health）
+fetch('https://custom-board-games-production.up.railway.app/health')
+  .then(r => r.json())
+  .then(d => console.log('✅ 后端连接成功:', d))
+  .catch(e => console.log('❌ 后端连接失败:', e));
+
 let usernameTimer, emailTimer, resendTimer;
 let pendingVerifyId = '', pendingVerifyEmail = '';
 

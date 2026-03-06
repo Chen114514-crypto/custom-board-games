@@ -14,11 +14,10 @@ import { authenticate }        from '../middlewares/authMiddleware';
 const router = Router();
 
 // 公开接口
-router.post('/register',            registerRateLimiter, validate(registerValidators), AuthController.register);
-router.post('/login',               loginRateLimiter,    validate(loginValidators),    AuthController.login);
+router.post('/register',            registerRateLimiter, validate(registerValidators), AuthController.register);  
+router.post('/login',               loginRateLimiter,    validate(loginValidators),    AuthController.login);     
 router.post('/resend-verification', AuthController.resendVerification);
-router.post('/verify-email-code',   AuthController.verifyEmailByCode);
-router.get ('/verify-email',        AuthController.verifyEmail);
+router.post('/verify-email',        AuthController.verifyEmailByCode);  // 改成这个
 router.get ('/check-email',         AuthController.checkEmail);
 router.get ('/check-username',      AuthController.checkUsername);
 router.post('/logout',              AuthController.logout);
