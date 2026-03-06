@@ -198,14 +198,6 @@
 <script>
 const API_BASE = 'https://custom-board-games-production.up.railway.app/api';
 
-// 所有 fetch 都用这个地址
-fetch(`${API_BASE}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',  // 重要！允许跨域 cookie
-    body: JSON.stringify({ username, password })
-})
-
 //  初始化 
 window.addEventListener('DOMContentLoaded', () => {
   // 已登录直接跳转
