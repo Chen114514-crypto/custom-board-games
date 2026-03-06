@@ -29,8 +29,12 @@ app.use(helmet({
 
 // ==================== CORS ====================
 app.use(cors({
-    origin:         ENV.FRONTEND_URL,
-    credentials:    true,
+    origin: [
+        'https://chen114514-crypto.github.io',
+        'http://localhost:5173',
+        'http://192.168.40.15:5173'
+    ],
+    credentials: true,
     methods:        ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     maxAge:         86400,
